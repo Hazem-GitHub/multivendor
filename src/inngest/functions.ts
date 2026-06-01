@@ -64,7 +64,7 @@ export const couponFunctions = [
         {
             id: "delete-expired-coupon",
             name: "Delete Expired Coupon",
-            triggers: { event:'coupon.expired'},
+            triggers: { event:'app/coupon.expired'},
         },
         async ({ event, step }) => {
             const { data } = event;
