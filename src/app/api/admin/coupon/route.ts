@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         }).then(async () => {
             // Trigger the inngest function to delete the coupon after it's expired
             await inngest.send({
-                name: "coupon.expired",
+                name: "app/coupon.expired",
                 data: {
                     code: code.toUpperCase(),
                     expires_at: expiresAt,
