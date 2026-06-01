@@ -1,6 +1,7 @@
 // Add a new coupon
 
 import { prisma } from "@/src/db";
+import { inngest } from "@/src/inngest/client";
 import authAdmin from "@/src/middlewares/authAdmin";
 import { getAuth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
@@ -19,6 +20,15 @@ export async function POST(request: NextRequest) {
         }
         await prisma.coupon.create({
             data: {...coupon, code: code.toUpperCase()},
+        }).then(async () => {
+            // Trigger the inngest function to delete the coupon after it's expired
+            await inngest.send({
+                name: "coupon.expired",
+                data: {
+                    code: code.toUpperCase(),
+                    expires_at: expiresAt,
+                },
+            });
         });
         return NextResponse.json({ message: "Coupon created successfully" }, { status: 200 });
     } catch (error) {
