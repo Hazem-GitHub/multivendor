@@ -2,10 +2,15 @@
 import { dummyAdminDashboardData } from "@/src/assets/assets"
 import Loading from "@/src/components/Loading"
 import OrdersAreaChart from "@/src/components/OrdersAreaChart"
+import { useAuth, useUser } from "@clerk/nextjs"
+import axios from "axios"
 import { CircleDollarSignIcon, ShoppingBasketIcon, StoreIcon, TagsIcon } from "lucide-react"
 import { useEffect, useState } from "react"
+import toast from "react-hot-toast"
 
 export default function AdminDashboard() {
+    const user = useUser()
+    const { getToken } = useAuth()
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
 
@@ -26,13 +31,29 @@ export default function AdminDashboard() {
     ]
 
     const fetchDashboardData = async () => {
-        setDashboardData(dummyAdminDashboardData)
-        setLoading(false)
+        const token = await getToken()
+        if (!token) return;
+
+        try {
+            const { data } = await axios.get('/api/admin/dashboard', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setDashboardData(data.dashboardData)
+        } catch (error) {
+            console.error(error)
+            toast.error(error?.response?.data?.message || error.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
-        fetchDashboardData()
-    }, [])
+        if (user) {
+            fetchDashboardData()
+        }
+    }, [user])
 
     if (loading) return <Loading />
 
