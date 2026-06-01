@@ -44,9 +44,8 @@ export default function AdminApprove() {
                     Authorization: `Bearer ${token}`
                 }
             })
-            toast.success(data.message)
-            setLoading(true)
             await fetchStores()
+            toast.success(data.message)
         } catch (error) {
             console.error(error)
             toast.error(error?.response?.data?.message || error.message)

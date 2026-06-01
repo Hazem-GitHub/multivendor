@@ -108,9 +108,17 @@ export default function CreateStore() {
                     'Content-Type': 'multipart/form-data'
                 }
             })
-
-            toast.success(data.message)
+            setStoreInfo({
+                name: "",
+                username: "",
+                description: "",
+                email: "",
+                contact: "",
+                address: "",
+                image: null
+            })
             await fetchSellerStatus()
+            toast.success(data.message)
         } catch (error) {
             return toast.error(error?.response?.data?.error || error.message)
         }

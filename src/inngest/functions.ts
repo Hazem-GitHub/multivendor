@@ -56,3 +56,24 @@ export const userFunctions = [
         }
     ),
 ];
+
+
+// Inngest function to delete coupon after it's expired
+export const couponFunctions = [
+    inngest.createFunction(
+        {
+            id: "delete-expired-coupon",
+            name: "Delete Expired Coupon",
+            triggers: { event:'coupon.expired'},
+        },
+        async ({ event, step }) => {
+            const { data } = event;
+            const expiryDate = new Date(data.expires_at);
+            await step.sleepUntil(`wait-for-coupon-expiry`, expiryDate)
+
+            await step.run('delete-coupon', async () => {
+                await prisma.coupon.delete({ where: { code: data.code } });
+            })
+        }
+    )
+];
