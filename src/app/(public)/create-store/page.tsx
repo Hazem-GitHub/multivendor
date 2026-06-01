@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import toast from "react-hot-toast"
 import Loading from "@/src/components/Loading"
+import { useAuth, useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import axios from "axios"
 
 export default function CreateStore() {
     type StoreInfo = {
@@ -15,6 +18,10 @@ export default function CreateStore() {
         address: string
         image: File | null
     }
+
+    const { user } = useUser()
+    const router = useRouter()
+    const { getToken } = useAuth()
 
     const [alreadySubmitted, setAlreadySubmitted] = useState(false)
     const [status, setStatus] = useState("")
@@ -37,21 +44,91 @@ export default function CreateStore() {
 
     const fetchSellerStatus = async () => {
         // Logic to check if the store is already submitted
+        const token = await getToken()
 
+        try {
+            const { data } = await axios.get('/api/store/create', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
 
+            if (['approved', 'rejected', 'pending'].includes(data.status)) { 
+                setStatus(data.status)
+                setAlreadySubmitted(true)
+                switch (data.status) {
+                    case 'approved':
+                        setMessage('Your store has been approved, you can now add products to your store from your dashboard')
+                        setTimeout(() => {
+                            router.push('/store')
+                        }, 5000)
+                        break
+                    case 'rejected':
+                        setMessage('Your store request has been rejected, please contact the admin for more details')
+                        break
+                    case 'pending':
+                        setMessage('Your store request is pending, please wait for the admin to review your request')
+                        break
+                    default:
+                        break;
+                }
+            } else {
+                setAlreadySubmitted(false)
+            }
+        } catch (error) {
+            return toast.error(error?.response?.data?.error || error.message)
+        }
         setLoading(false)
     }
 
     const onSubmitHandler = async (e) => {
         e.preventDefault()
-        // Logic to submit the store details
+        
+        if (!user) {
+            return toast('please login to continue')
+        }
 
+        try {
+            const token = await getToken()
+            if (!token) {
+                return toast('please login to continue')
+            }
+            const formData = new FormData()
+            formData.append('name', storeInfo.name)
+            formData.append('username', storeInfo.username)
+            formData.append('description', storeInfo.description)
+            formData.append('email', storeInfo.email)
+            formData.append('contact', storeInfo.contact)
+            formData.append('address', storeInfo.address)
+            formData.append('image', storeInfo.image)
 
+            const { data } = await axios.post('/api/store/create', formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+
+            toast.success(data.message)
+            await fetchSellerStatus()
+        } catch (error) {
+            return toast.error(error?.response?.data?.error || error.message)
+        }
     }
 
     useEffect(() => {
-        fetchSellerStatus()
-    }, [])
+        if (user) {
+            fetchSellerStatus()
+        }
+    }, [user])
+
+    if (!user) {
+        return (
+            <div className="min-h-[80vh] mx-6 flex items-center justify-center text-slate-400">
+                <h1 className="text-2xl sm:text-4xl font-semibold">Please <span className="text-slate-500">Login</span> to continue</h1>
+            </div>
+        )
+    }
 
     return !loading ? (
         <>
