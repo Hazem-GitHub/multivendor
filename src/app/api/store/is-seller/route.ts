@@ -6,7 +6,7 @@ import { type NextRequest, NextResponse } from "next/server";
 // Check if the user is a seller
 export async function GET(request: NextRequest) {
     try {
-        const { userId } = await getAuth(request);
+        const { userId } = getAuth(request);
         // Check if the user is a seller
         const isSeller = await authSeller(userId);
         if (!isSeller) {

@@ -7,7 +7,7 @@ import { type NextRequest, NextResponse } from "next/server";
 // Create a product for a store
 export async function POST(request: NextRequest) {
     try {
-        const { userId } = await getAuth(request);
+        const { userId } = getAuth(request);
         const storeId = await authSeller(userId);
         if (!storeId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             return await imageKit.files.upload({
                 file: image,
                 fileName: `${name}-${Date.now()}.${image.name}`,
-                folder: "Products/Store/${storeId}",
+                folder: `Products/Store/${storeId}`,
             });
         }));
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 // Get all products for a seller
 export async function GET(request: NextRequest) {
     try {
-        const { userId } = await getAuth(request);
+        const { userId } = getAuth(request);
         const storeId = await authSeller(userId);
         if (!storeId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

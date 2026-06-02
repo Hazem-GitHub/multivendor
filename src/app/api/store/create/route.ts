@@ -7,7 +7,7 @@ import imageKit from "@/src/configs/imageKit";
 // Create the store
 export async function POST(request: NextRequest) { 
     try {
-        const { userId } = await getAuth(request);
+        const { userId } = getAuth(request);
 
         // Get the data from the form
         const formData = await request.formData();
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 // Check if user has already registered a store if yes then sen the status to the client
 export async function GET(request: NextRequest) {
     try {
-        const { userId } = await getAuth(request);
+        const { userId } = getAuth(request);
 
         // Check if the user has already registered a store
         const store = await prisma.store.findFirst({

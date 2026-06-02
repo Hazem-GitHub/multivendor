@@ -8,7 +8,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) { 
     try {
-        const { userId } = await getAuth(request);
+        const { userId } = getAuth(request);
         const storeId = await authSeller(userId);
         if (!storeId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -2,8 +2,14 @@
 import { useEffect, useState } from "react"
 import Loading from "@/src/components/Loading"
 import { orderDummyData } from "@/src/assets/assets"
+import { useAuth, useUser } from "@clerk/nextjs"
+import axios from "axios"
+import toast from "react-hot-toast"
 
 export default function StoreOrders() {
+    const { getToken } = useAuth()
+    const { user } = useUser()
+
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState(null)
@@ -11,14 +17,42 @@ export default function StoreOrders() {
 
 
     const fetchOrders = async () => {
-       setOrders(orderDummyData)
-       setLoading(false)
+       try {
+        const token = await getToken()
+        if (!token) return;
+        const { data } = await axios.get('/api/store/orders', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        setOrders(data.orders)
+       } catch (error) {
+        console.error(error)
+        toast.error(error?.response?.data?.message || error.message)
+       } finally {
+        setLoading(false)
+       }
     }
 
     const updateOrderStatus = async (orderId, status) => {
         // Logic to update the status of an order
-
-
+        const token = await getToken()
+        if (!token) return;
+        try {
+            const { data } = await axios.post('/api/store/orders', {
+                orderId,
+                status
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            await fetchOrders()
+            toast.success(data.message)
+        } catch (error) {
+            console.error(error)
+            toast.error(error?.response?.data?.message || error.message)
+        }
     }
 
     const openModal = (order) => {
@@ -32,8 +66,10 @@ export default function StoreOrders() {
     }
 
     useEffect(() => {
-        fetchOrders()
-    }, [])
+        if (user) {
+            fetchOrders()
+        }
+    }, [user])
 
     if (loading) return <Loading />
 

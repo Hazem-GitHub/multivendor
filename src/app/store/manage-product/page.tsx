@@ -3,9 +3,12 @@ import { useEffect, useState } from "react"
 import { toast } from "react-hot-toast"
 import Image from "next/image"
 import Loading from "@/src/components/Loading"
-import { productDummyData } from "@/src/assets/assets"
+import { useAuth, useUser } from "@clerk/nextjs"
+import axios from "axios"
 
 export default function StoreManageProducts() {
+    const { getToken } = useAuth()
+    const  { user } = useUser()
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
 
@@ -13,19 +16,48 @@ export default function StoreManageProducts() {
     const [products, setProducts] = useState([])
 
     const fetchProducts = async () => {
-        setProducts(productDummyData)
-        setLoading(false)
+        const token = await getToken()
+        if (!token) return;
+        try {
+            const { data } = await axios.get('/api/store/product', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setProducts(data.products)
+        } catch (error) {
+            console.error(error)
+            toast.error(error?.response?.data?.message || error.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const toggleStock = async (productId) => {
         // Logic to toggle the stock of a product
-
-
+        const token = await getToken()
+        if (!token) return;
+        try {
+            const { data } = await axios.post('/api/store/stock-toggle', {
+                productId
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            await fetchProducts()
+            toast.success(data.message)
+        } catch (error) {
+            console.error(error)
+            toast.error(error?.response?.data?.message || error.message)
+        }
     }
 
     useEffect(() => {
+        if (user) {
             fetchProducts()
-    }, [])
+        }
+    }, [user])
 
     if (loading) return <Loading />
 
